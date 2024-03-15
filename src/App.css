@@ -1,38 +1,68 @@
-.App {
-  text-align: center;
+.Navigation{
+  padding: 15px;
+  margin-top: 20px;
+  padding-left: 40px;
+  padding-right: 40px;
+  border-bottom: 1px black solid;
+  border-top: 1px black solid;
 }
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.NewVoting{
+  padding: 30px;
+  font-size: large;
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.VotingBox
+{
+  padding: 20px;
+  margin: 10px 0;
+  box-Shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-Radius: 10px;
+  background-Color: white;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  justify-Content: space-between;
+  align-Items: center;
 }
 
-.App-link {
-  color: #61dafb;
+.HistoryHeader{
+  margin-bottom: 20px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.HistoryTitle{
+  font-Size: 18px;
+  font-Weight: bold;
+  width: 33%;
 }
+.HistoryResult{
+  font-Size: 16px;
+  width: 33%;
+}
+.DetailResult{
+  margin-bottom: 30px;
+}
+.DetailsCreation{
+  width: 40%;
+}
+.DetailsParticipants{
+  width: 60%;
+}
+.DetailsDetailsParticipants{
+  border: 1px solid lightgrey;
+  padding: 8px;
+  margin: 8px 0;
+  border-Radius: 4px 
+}
+.DetailParticipantName{
+  width: 50%;
+  margin-Left: 15px
+}
+.DetailParticipantVote{
+  width: 50%;
+  margin-Right: 15px
+}
+.VotingInputCreator{
+  padding-bottom: 15px;
+}
+.margin{
+  margin: 20px;
+}
+
+
