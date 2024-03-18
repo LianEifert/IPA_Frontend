@@ -11,12 +11,6 @@ interface IParticipant {
   votingId: string
 }
 
-interface INewVoting {
-  title: string;
-  creator: any;
-}
-
-
 const msalConfig = {
   auth: {
     clientId: 'eac44f26-f2c9-4289-9c0b-262421ae4db3',
@@ -37,10 +31,9 @@ function App() {
   const [votingDetails, setVotingDetails] = useState<undefined | any>(null);
   const [isDetailsDialogVisible, setIsDetailsDialogVisible] = useState<boolean>(false);
   const [isNewVotingDialogVisible, setIsNewVotingDialogVisible] = useState<boolean>(false);
-  const [newVoting, setNewVoting] = useState<INewVoting>({ title: '', creator: '' });
+  const [newVotingTitle, setNewVoting] = useState<string>('');
   const [showVoting, setShowVoting] = useState<boolean>(false);
-  const [userName, setUserName] = useState<string>('');
-  const [isNameDialogVisible, setIsNameDialogVisible] = useState<boolean>(false);
+  const [userName, setUserName] = useState<string | undefined>('');
   const [votingId, setVotingId] = useState<string>("");
   const [participants, setParticipants] = useState<IParticipant[]>([]);
   const [currentVote, setCurrentVote] = useState<number | null>(null);
@@ -50,10 +43,10 @@ function App() {
 
   const finishVoting = async () => {
     const validVotes = participants.filter(p => p.vote !== -1).map(p => p.vote);
-    const averageVote = validVotes.reduce((acc, vote) => acc + vote, 0) / validVotes.length;
+    const averageVote = validVotes.reduce((tot, vote) => tot + vote, 0) / validVotes.length;
 
     try {
-      const response = await fetch(`http://localhost:7271/api/Voting/${votingId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_UPDATEVOTING}${votingId}${process.env.REACT_APP_API_UPDATEVOTINGCODE}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -69,7 +62,6 @@ function App() {
       }
 
       const updatedVoting = await response.json();
-      localStorage.removeItem('userName');
       localStorage.removeItem('ParticipantId');
       setvotingFinished(true);
       setVotingResult(updatedVoting.result)
@@ -82,7 +74,7 @@ function App() {
 
   const updateVote = async (participantId: string | null, vote: number) => {
     try {
-      const response = await fetch(`http://localhost:7271/api/Participant/${participantId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_UPDATEPARTICIPANT}${participantId}${process.env.REACT_APP_API_UPDATEPARTICIPANTCODE}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -103,14 +95,14 @@ function App() {
   };
 
 
-  const createNewParticipant = async (votingId: string, name: string) => {
+  const createNewParticipant = async (votingId: string, name: string | undefined) => {
     const requestBody = {
       votingId: votingId,
       name: name
     };
 
     try {
-      const response = await fetch('http://localhost:7271/api/Participant', {
+      const response = await fetch(`${process.env.REACT_APP_API_CREATEPARTICIPANT}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -134,19 +126,18 @@ function App() {
 
 
   const createNewVoting = async () => {
-    if (localStorage.getItem('userName')) {
-      newVoting.creator = localStorage.getItem('userName')
-    }
-    else {
-      localStorage.setItem('userName', newVoting.creator)
+
+    const body = {
+      title: newVotingTitle,
+      creator: userName
     }
     try {
-      const response = await fetch('http://localhost:7271/api/Voting', {
+      const response = await fetch(`${process.env.REACT_APP_API_CREATEVOTINGS}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(newVoting)
+        body: JSON.stringify(body)
       });
 
       if (!response.ok) {
@@ -159,8 +150,7 @@ function App() {
       localStorage.setItem('ParticipantId', data.id);
       window.location.href = `${window.location.origin}/${data.id}`;
 
-      createNewParticipant(data.id, newVoting.creator);
-
+      createNewParticipant(data.id, userName);
 
     } catch (error) {
       console.error("Error creating new voting:", error);
@@ -169,7 +159,7 @@ function App() {
 
 
   const fetchVotingDetails = async (votingId: string) => {
-    const response = await fetch(`http://localhost:7271/api/Voting/${votingId}`);
+    const response = await fetch(`${process.env.REACT_APP_API_GETVOTING}${votingId}${process.env.REACT_APP_API_GETVOTINGCODE}`);
     if (response.ok) {
       const data = await response.json();
       setVotingDetails(data);
@@ -182,7 +172,7 @@ function App() {
 
   const fetchParticipants = async (votingId: string) => {
     try {
-      const response = await fetch(`http://localhost:7271/api/Voting/${votingId}`);
+      const response = await fetch(`${process.env.REACT_APP_API_GETVOTING}${votingId}${process.env.REACT_APP_API_GETVOTINGCODE}`);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -200,12 +190,11 @@ function App() {
       setVotingId(id);
       setShowVoting(true);
       fetchParticipants(id);
-      const storedName = localStorage.getItem('userName');
       if (localStorage.getItem('ParticipantId')) {
         setcurrentParticipantId(localStorage.getItem('ParticipantId'));
       }
-      if (!storedName) {
-        setIsNameDialogVisible(true);
+      else{
+        createNewParticipant(id,userName);
       }
     } else {
       setShowVoting(false);
@@ -215,7 +204,7 @@ function App() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await fetch('http://localhost:7271/api/Votings');
+        const response = await fetch(`${process.env.REACT_APP_API_GETALLVOTINGS}`);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -244,6 +233,7 @@ function App() {
           }
 
           const account = msalInstance.getActiveAccount();
+          setUserName(account?.name)
           if (account && tokenResponse) {
             console.log("[AuthService] Got valid accountObj and tokenResponse");
             setMsalToken(tokenResponse.accessToken);
@@ -286,24 +276,14 @@ function App() {
     setIsDialogVisible(true);
   };
 
-  const saveName = () => {
-    localStorage.setItem('userName', userName);
-    setIsNameDialogVisible(false);
-    createNewParticipant(votingId, userName)
-  };
-
-  const handleInputChange = (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, field: keyof INewVoting) => {
-    setNewVoting({ ...newVoting, [field]: event.currentTarget.value });
-  };
-
-  const handleNameChange = (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
-    setUserName(newValue || '');
+  const handleInputChange = (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setNewVoting(event.currentTarget.value);
   };
 
   const handleVote = (vote: number) => {
     setCurrentVote(vote);
     updateVote(currentParticipantId, vote);
-  }; 
+  };
 
 
   return (
@@ -311,6 +291,9 @@ function App() {
       <Spinner size={SpinnerSize.large} label="Loading..." ariaLive="assertive" labelPosition="right" />
     ) : (
       <Stack>
+        <Stack horizontalAlign='end' className='Username'>
+          <Text variant='large'>{userName}</Text>
+          </Stack>
         <Stack horizontal horizontalAlign="space-between" verticalAlign="center" className='Navigation'>
           <Stack horizontal verticalAlign="center">
             <img src={Logo} alt="Logo IOZ" style={{ width: '75px', marginRight: '10px' }} />
@@ -480,35 +463,9 @@ function App() {
           }}
         >
           <Stack tokens={{ childrenGap: 15 }}>
-            <TextField label="Name" placeholder="Name" value={newVoting.title} onChange={(event) => handleInputChange(event, 'title')} />
-            {
-              !localStorage.getItem('userName') &&
-              <TextField
-                label="Ersteller"
-                placeholder="Ersteller"
-                value={newVoting.creator}
-                onChange={(event) => handleInputChange(event, 'creator')}
-                className='VotingInputCreator'
-              />
-            }
-            <PrimaryButton text="Erstellen" onClick={createNewVoting} className="CreateVotingButton" />
-          </Stack>
-        </Dialog>
+            <TextField label="Name" placeholder="Name" value={newVotingTitle} onChange={(event) => handleInputChange(event)} />
 
-        <Dialog
-          hidden={!isNameDialogVisible}
-          onDismiss={() => setIsNameDialogVisible(false)}
-          dialogContentProps={{
-            type: DialogType.largeHeader,
-            title: 'Namen eingeben'
-          }}
-          modalProps={{
-            isBlocking: true
-          }}
-        >
-          <Stack tokens={{ childrenGap: 15 }}>
-            <TextField label="Name" placeholder="Name" value={userName} onChange={handleNameChange} />
-            <PrimaryButton text="Teilnehmen" onClick={saveName} disabled={!userName.trim()} />
+            <PrimaryButton text="Erstellen" onClick={createNewVoting} className="CreateVotingButton" />
           </Stack>
         </Dialog>
       </Stack>
