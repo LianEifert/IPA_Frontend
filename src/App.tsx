@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { Text, PrimaryButton, Stack, DialogFooter, DialogType, Dialog, Spinner, SpinnerSize, List, TextField } from '@fluentui/react';
+import Logo from './img/IOZ.png'
 
 interface IParticipant {
   id: string,
@@ -302,7 +303,7 @@ function App() {
   const handleVote = (vote: number) => {
     setCurrentVote(vote);
     updateVote(currentParticipantId, vote);
-  };
+  }; 
 
 
   return (
@@ -311,11 +312,15 @@ function App() {
     ) : (
       <Stack>
         <Stack horizontal horizontalAlign="space-between" verticalAlign="center" className='Navigation'>
-          <Text variant="xxLarge">Project Estimator</Text>
+          <Stack horizontal verticalAlign="center">
+            <img src={Logo} alt="Logo IOZ" style={{ width: '75px', marginRight: '10px' }} />
+            <Text variant="xxLarge">Project Estimator</Text>
+          </Stack>
           <Stack horizontal horizontalAlign="end">
             <Text variant='xLarge' onClick={toggleDialog}>History</Text>
           </Stack>
         </Stack>
+
 
         {!showVoting ? (
           <Stack grow horizontalAlign="center" verticalAlign="center" styles={{ root: { height: '90vh' } }}>
@@ -357,7 +362,7 @@ function App() {
                 />
               ))}
             </Stack>
-            <PrimaryButton text="Abschliessen" onClick={finishVoting} className='margin'/>
+            <PrimaryButton text="Abschliessen" onClick={finishVoting} className='margin' />
           </Stack>
         )}
 
