@@ -17,7 +17,7 @@ steps:
 
 - script: |
     npm install
-    npm run build
+    npm run build -- --mode production
   displayName: 'npm install and build'
 
 - publish: $(System.DefaultWorkingDirectory)/build
