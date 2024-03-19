@@ -188,6 +188,7 @@ function App() {
   const handleLogin = async () => {
     if (!msalToken) {
       try {
+
         const tokenResponse = await msalInstance.handleRedirectPromise();
         if (tokenResponse) {
           msalInstance.setActiveAccount(tokenResponse.account);
@@ -246,7 +247,7 @@ function App() {
       fetchParticipants(id);
       joinGroup(id);
     }
-  }, [joinGroup, participants]);
+  }, [joinGroup]);
 
 
   useEffect(() => {
@@ -355,13 +356,19 @@ function App() {
         ) : (
           <Stack>
             <Stack tokens={{ childrenGap: 10 }}>
-              <Text variant="large">Teilnehmer:</Text>
-              {participants.map((participant) => (
-                <Text key={participant.id}>
-                  {participant.name}{participant.id === currentParticipantId ? ` Voting: ${participant.vote !== -1 ? participant.vote : "Noch nicht abgestimmt"}` : ''}
-                </Text>
-              ))}
+              <Text variant="large" className="largeText">Teilnehmer:</Text>
+              <div className="participantGrid">
+                {participants.map((participant) => (
+                  <div key={participant.id} className={`participantCard ${participant.vote !== -1 ? 'participantVoted' : ''} ${participant.id === currentParticipantId ? 'participantCurrent' : ''}`}>
+                    <Text>
+                      {participant.name}
+                      {participant.id === currentParticipantId && participant.vote !== -1 ? ` Voting: ${participant.vote}` : ''}
+                    </Text>
+                  </div>
+                ))}
+              </div>
             </Stack>
+
 
             <Stack horizontal tokens={{ childrenGap: 10 }} wrap>
               <Text variant="large">Wählen:</Text>

@@ -69,4 +69,33 @@
   padding-top: 15px;
 }
 
+.participantGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  padding: 10px;
+}
+
+.participantCard {
+  border: 1px solid grey;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.participantVoted {
+  background-color: lightblue;
+}
+
+.participantCurrent {
+  font-weight: bold;
+  border: 2px solid black;
+}
+
+.largeText {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+}
+
 
