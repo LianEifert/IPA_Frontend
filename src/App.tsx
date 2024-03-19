@@ -95,10 +95,10 @@ function App() {
   };
 
 
-  const createNewParticipant = async (votingId: string, name: string | undefined) => {
+  const createNewParticipant = async (votingId: string) => {
     const requestBody = {
       votingId: votingId,
-      name: name
+      name: userName
     };
 
     try {
@@ -147,10 +147,7 @@ function App() {
       const data = await response.json();
       console.log('New voting created:', data);
       toggleNewVotingDialog();
-      localStorage.setItem('ParticipantId', data.id);
       window.location.href = `${window.location.origin}/${data.id}`;
-
-      createNewParticipant(data.id, userName);
 
     } catch (error) {
       console.error("Error creating new voting:", error);
@@ -183,6 +180,48 @@ function App() {
     }
   };
 
+  const handleLogin = async () => {
+    if (!msalToken) {
+      try {
+        const tokenResponse = await msalInstance.handleRedirectPromise();
+        if (tokenResponse) {
+          msalInstance.setActiveAccount(tokenResponse.account);
+          window.location.reload();
+        } else {
+          msalInstance.setActiveAccount(msalInstance.getAllAccounts()[0]);
+        }
+
+        const account = msalInstance.getActiveAccount();
+         setUserName(account?.name);
+        if (account && tokenResponse) {
+          console.log("[AuthService] Got valid accountObj and tokenResponse");
+          setMsalToken(tokenResponse.accessToken);
+        } else if (account) {
+          console.log("[AuthService] User has logged in, but no tokens.");
+          try {
+            const silentTokenResponse = await msalInstance.acquireTokenSilent({ account, scopes });
+            setMsalToken(silentTokenResponse.accessToken);
+            console.log("[AuthService] Token acquired")
+          } catch (error) {
+            console.log("[AuthService] Token could not be acquired silently");
+            await msalInstance.acquireTokenRedirect({ account, scopes });
+          }
+        } else {
+          console.log("[AuthService] No accountObject or tokenResponse present. User must now login.");
+          await msalInstance.loginRedirect({ scopes });
+        }
+      } catch (error) {
+        console.error("[AuthService] Failed to handleRedirectPromise()", error);
+      }
+      finally {
+        setIsLoading(false);
+      }
+    }
+    else {
+      setIsLoading(false);
+    }
+  };
+
 
   useEffect(() => {
     const id = window.location.pathname.substring(1);
@@ -190,16 +229,23 @@ function App() {
       setVotingId(id);
       setShowVoting(true);
       fetchParticipants(id);
-      if (localStorage.getItem('ParticipantId')) {
-        setcurrentParticipantId(localStorage.getItem('ParticipantId'));
-      }
-      else{
-        createNewParticipant(id,userName);
-      }
     } else {
       setShowVoting(false);
     }
   }, []);
+
+  useEffect(() => {
+    const id = window.location.pathname.substring(1);
+    if(id)
+    {
+      if (localStorage.getItem('ParticipantId')) {
+        setcurrentParticipantId(localStorage.getItem('ParticipantId'));
+      }
+      else{
+        createNewParticipant(id);
+      }
+    }
+  },[userName])
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -221,48 +267,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const handleLogin = async () => {
-      if (!msalToken) {
-        try {
-          const tokenResponse = await msalInstance.handleRedirectPromise();
-          if (tokenResponse) {
-            msalInstance.setActiveAccount(tokenResponse.account);
-            window.location.reload();
-          } else {
-            msalInstance.setActiveAccount(msalInstance.getAllAccounts()[0]);
-          }
-
-          const account = msalInstance.getActiveAccount();
-          setUserName(account?.name)
-          if (account && tokenResponse) {
-            console.log("[AuthService] Got valid accountObj and tokenResponse");
-            setMsalToken(tokenResponse.accessToken);
-          } else if (account) {
-            console.log("[AuthService] User has logged in, but no tokens.");
-            try {
-              const silentTokenResponse = await msalInstance.acquireTokenSilent({ account, scopes });
-              setMsalToken(silentTokenResponse.accessToken);
-              console.log("[AuthService] Token acquired")
-            } catch (error) {
-              console.log("[AuthService] Token could not be acquired silently");
-              await msalInstance.acquireTokenRedirect({ account, scopes });
-            }
-          } else {
-            console.log("[AuthService] No accountObject or tokenResponse present. User must now login.");
-            await msalInstance.loginRedirect({ scopes });
-          }
-        } catch (error) {
-          console.error("[AuthService] Failed to handleRedirectPromise()", error);
-        }
-        finally {
-          setIsLoading(false);
-        }
-      }
-      else {
-        setIsLoading(false);
-      }
-    };
-
     handleLogin();
   });
 
