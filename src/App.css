@@ -3,8 +3,8 @@
   margin-top: 20px;
   padding-left: 40px;
   padding-right: 40px;
-  border-bottom: 1px black solid;
-  border-top: 1px black solid;
+  border-bottom: 1px lightgray solid;
+  border-top: 1px lightgray solid;
 }
 .NewVoting{
   padding: 30px;
@@ -77,15 +77,16 @@
 }
 
 .participantCard {
-  border: 1px solid grey;
+  border: 1px solid black;
   padding: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  margin-bottom: 20px;
+  min-width: 250px;
+  min-height: 300px;
+  border-radius: 10px;
 }
 
 .participantVoted {
-  background-color: lightblue;
+  background-color: rgb(200, 209, 253);
 }
 
 .participantCurrent {
@@ -93,9 +94,47 @@
   border: 2px solid black;
 }
 
-.largeText {
-  font-size: 1.5em;
-  margin-bottom: 10px;
+.votingTitle {
+  font-size: 40px;
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+.participantContainer{
+  border: 1px solid gray;
+  border-radius: 50px;
+  width: 75%;
+  padding: 20px;
+  margin: 20px;
+}
+.participantName{
+  margin: 10px;
+}
+.participantVote{
+  font-size: 90px;
+}
+.finishVotingButton{
+  width: 12%;
+  min-height: 60px;
+  font-size: 30px;
+  border-radius: 10px;
 }
 
+
+.buttonContainer{
+  border: 1px solid gray;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 50px;
+  width: 75%;
+}
+.votingButton{
+  min-width: 150px;
+  min-height: 150px;
+  border-radius: 10px;
+  font-size: 50px;
+  margin-bottom: 20px;
+}
+.votingButtonInfo{
+  padding: 20px;
+}
 

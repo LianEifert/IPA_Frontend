@@ -1,41 +1,65 @@
 import * as signalR from "@microsoft/signalr";
 import appSettings from './appSettings';
 
+interface IParticipant {
+    id: string,
+    name: string,
+    vote: number,
+    votingId: string
+}
+
 const settings = appSettings();
 
 const URL: any = settings.URL;
 
 class Connector {
     private connection: signalR.HubConnection;
-    public events: (ShowResults:(result: number) => void) => void;
+    public events: (ShowResults: (result: number) => void, UserJoined: (votingId: string) => void, NewVote: (votingId: string) => void) => void;
     static instance: Connector;
     constructor() {
         this.connection = new signalR.HubConnectionBuilder()
             .withUrl(URL)
             .withAutomaticReconnect()
             .build();
-            this.start()
-        this.events = (onVotingFinished) => {
+        this.start()
+        this.events = (onVotingFinished, onUserJoined, onNewVote) => {
             this.connection.on("VotingFinished", (result: number) => {
                 onVotingFinished(result);
+            });
+            this.connection.on("UserJoined", (votingId: string) => {
+                onUserJoined(votingId);
+            });
+            this.connection.on("NewVote", (votingId: string) => {
+                onNewVote(votingId);
             });
         };
     }
 
     public start = async () => {
-       await this.connection.start().catch(err => document.write(err));
+        await this.connection.start().catch(err => document.write(err));
     }
-    
+
     public ShowResults = (groupName: string, result: number) => {
-        this.connection.send("ShowResults",groupName, result).catch(err => console.error(err));
+        this.connection.send("ShowResults", groupName, result).catch(err => console.error(err));
     }
     public joinGroup = (groupName: string) => {
-        setTimeout( () => {
+        if (this.connection.state === signalR.HubConnectionState.Connecting) {
+            var interval = setInterval(() => {
+                if (this.connection.state === signalR.HubConnectionState.Connected) {
+                    this.connection.invoke("joinGroup", groupName).catch(err => console.error(err));
+                    clearInterval(interval);
+                }
+                else{
+                    console.log("waiting for connection")
+                }
+            }, 250);
+        }
+        else {
             this.connection.invoke("joinGroup", groupName).catch(err => console.error(err));
-     }, 250);
+        }
     }
     public ShowVote = (groupName: string) => {
-        this.connection.send("ShowVote",groupName).catch(err => console.error(err));
+        this.connection.send("ShowVote", groupName).catch(err => console.error(err));
     }
 
     public static getInstance(): Connector {

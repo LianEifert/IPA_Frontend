@@ -37,7 +37,7 @@ function App() {
   const [isNewVotingDialogVisible, setIsNewVotingDialogVisible] = useState<boolean>(false);
   const [newVotingTitle, setNewVoting] = useState<string>('');
   const [showVoting, setShowVoting] = useState<boolean>(false);
-  const [userName, setUserName] = useState<string | undefined>('');
+  const [userName, setUserName] = useState<string>();
   const [votingId, setVotingId] = useState<string>("");
   const [participants, setParticipants] = useState<IParticipant[]>([]);
   const [currentVote, setCurrentVote] = useState<number | null>(null);
@@ -47,7 +47,11 @@ function App() {
 
   const finishVoting = async () => {
     const validVotes = participants.filter(p => p.vote !== -1).map(p => p.vote);
-    const averageVote = validVotes.reduce((tot, vote) => tot + vote, 0) / validVotes.length;
+    var averageVote = 0;
+    if (validVotes.length !== 0) {
+      averageVote = validVotes.reduce((tot, vote) => tot + vote, 0) / validVotes.length;
+    }
+
 
     try {
       const response = await fetch(`${process.env.REACT_APP_API_UPDATEVOTING}${votingId}${process.env.REACT_APP_API_UPDATEVOTINGCODE}`, {
@@ -101,10 +105,10 @@ function App() {
   };
 
 
-  const createNewParticipant = async (votingId: string) => {
+  const createNewParticipant = async (votingId: string, name: string) => {
     const requestBody = {
       votingId: votingId,
-      name: userName
+      name: name
     };
 
     try {
@@ -124,7 +128,8 @@ function App() {
       console.log('New participant created:', data);
       setcurrentParticipantId(data.id);
       localStorage.setItem("ParticipantId", data.id)
-
+      joinGroup(votingId);
+      fetchParticipants(votingId);
     } catch (error) {
       console.error("Error creating new participant:", error);
     }
@@ -132,7 +137,6 @@ function App() {
 
 
   const createNewVoting = async () => {
-
     const body = {
       title: newVotingTitle,
       creator: userName
@@ -180,12 +184,14 @@ function App() {
       }
       const data = await response.json();
       setParticipants(data.participants);
+      setVotingDetails(data);
     } catch (error) {
       console.error('Error fetching participants:', error);
     }
   };
 
   const handleLogin = async () => {
+
     if (!msalToken) {
       try {
 
@@ -198,7 +204,11 @@ function App() {
         }
 
         const account = msalInstance.getActiveAccount();
-        setUserName(account?.name);
+
+        if(account !== null){
+          setUserName(account.name ?? "");
+        }
+
         if (account && tokenResponse) {
           console.log("[AuthService] Got valid accountObj and tokenResponse");
           setMsalToken(tokenResponse.accessToken);
@@ -235,43 +245,56 @@ function App() {
       setvotingFinished(true);
       localStorage.removeItem('ParticipantId');
     };
+    const handleJoinGroupReceived = (votingId: string) => {
+      fetchParticipants(votingId);
+    };
+    const handleShowVoteReceived = (votingId: string) => {
+      fetchParticipants(votingId);
+    };
 
 
-    events(handleFinishReceived);
+
+    events(handleFinishReceived, handleJoinGroupReceived, handleShowVoteReceived);
 
   }, [events]);
 
   useEffect(() => {
-    const id = window.location.pathname.substring(1);
-    if (id) {
-      fetchParticipants(id);
-      joinGroup(id);
-    }
-  }, [joinGroup]);
+    handleLogin();
+  });
 
+  useEffect(() => {
+    const id = window.location.pathname.substring(1);
+    if (id && userName) {
+      if (localStorage.getItem('ParticipantId')) {
+        setcurrentParticipantId(localStorage.getItem('ParticipantId'));
+        fetchParticipants(id);
+      }
+      else {
+        createNewParticipant(id, userName ?? "");
+      }
+    }
+  }, [userName])
 
   useEffect(() => {
     const id = window.location.pathname.substring(1);
     if (id) {
       setVotingId(id);
       setShowVoting(true);
-      fetchParticipants(id);
     } else {
       setShowVoting(false);
+      localStorage.clear();
     }
   }, []);
 
-  useEffect(() => {
-    const id = window.location.pathname.substring(1);
-    if (id) {
-      if (localStorage.getItem('ParticipantId')) {
-        setcurrentParticipantId(localStorage.getItem('ParticipantId'));
-      }
-      else {
-        createNewParticipant(id);
-      }
-    }
-  }, [userName])
+  // useEffect(() => {
+  //   async function fetchCurrentParticipants() {
+  //     const id = window.location.pathname.substring(1);
+  //     if (id && currentParticipantId) {
+  //       await fetchParticipants(id);
+  //     }
+  //   }
+  //   fetchCurrentParticipants();   
+  // }, [currentParticipantId]);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -292,9 +315,7 @@ function App() {
     fetchHistory();
   }, []);
 
-  useEffect(() => {
-    handleLogin();
-  });
+ 
 
   const toggleDialog = () => setIsDialogVisible(!isDialogVisible);
 
@@ -356,32 +377,50 @@ function App() {
         ) : (
           <Stack>
             <Stack tokens={{ childrenGap: 10 }}>
-              <Text variant="large" className="largeText">Teilnehmer:</Text>
-              <div className="participantGrid">
-                {participants.map((participant) => (
-                  <div key={participant.id} className={`participantCard ${participant.vote !== -1 ? 'participantVoted' : ''} ${participant.id === currentParticipantId ? 'participantCurrent' : ''}`}>
-                    <Text>
-                      {participant.name}
-                      {participant.id === currentParticipantId && participant.vote !== -1 ? ` Voting: ${participant.vote}` : ''}
-                    </Text>
-                  </div>
-                ))}
-              </div>
+              <Stack horizontalAlign='center'>
+                <Text variant="xxLarge" className="votingTitle">{votingDetails ? votingDetails.title : 'Loading...'}</Text>
+              </Stack>
+              <Stack horizontalAlign='center'>
+                <PrimaryButton text="Abschliessen" onClick={finishVoting} className='finishVotingButton' />
+              </Stack>
+              <Stack horizontalAlign='center'>
+                <Stack className='participantContainer'>
+                  <Stack className="participantGrid">
+                    {participants.map((participant) => (
+                      <Stack horizontalAlign='center' key={participant.id}>
+                        <Text className='participantName' variant='xxLarge'>{participant.name}</Text>
+                        <Stack horizontalAlign='center' verticalAlign='center' className={`participantCard ${participant.vote !== -1 && participant.id !== currentParticipantId ? 'participantVoted' : ''} ${participant.id === currentParticipantId ? 'participantCurrent' : ''}`}>
+                          <Text className='participantVote'>
+                            {participant.id === currentParticipantId && participant.vote !== -1 ? ` ${participant.vote}` : ''}
+                          </Text>
+                        </Stack>
+                      </Stack>
+                    ))}
+                  </Stack>
+                </Stack>
+              </Stack>
+            </Stack>
+            {votingFinished ?
+
+              (<></>) : <></>}
+            <Stack horizontalAlign='center'>
+              <Stack className='buttonContainer' horizontalAlign='center'>
+                <Text variant="xxLarge" className='votingButtonInfo'>Wähle eine Karte</Text>
+                <Stack horizontal tokens={{ childrenGap: 10 }}>
+
+                  {[1, 2, 3, 5, 8, 13, 21, 34, 55].map((vote) => (
+                    <PrimaryButton
+                      key={vote}
+                      text={vote.toString()}
+                      onClick={() => handleVote(vote)}
+                      style={{ backgroundColor: currentVote === vote ? 'lightblue' : '' }}
+                      className='votingButton'
+                    />
+                  ))}
+                </Stack>
+              </Stack>
             </Stack>
 
-
-            <Stack horizontal tokens={{ childrenGap: 10 }} wrap>
-              <Text variant="large">Wählen:</Text>
-              {[1, 2, 3, 5, 8, 13, 21, 34, 55].map((vote) => (
-                <PrimaryButton
-                  key={vote}
-                  text={vote.toString()}
-                  onClick={() => handleVote(vote)}
-                  style={{ backgroundColor: currentVote === vote ? 'lightblue' : '' }}
-                />
-              ))}
-            </Stack>
-            <PrimaryButton text="Abschliessen" onClick={finishVoting} className='margin' />
           </Stack>
         )}
 
