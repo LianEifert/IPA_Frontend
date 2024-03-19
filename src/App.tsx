@@ -3,6 +3,7 @@ import './App.css';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { Text, PrimaryButton, Stack, DialogFooter, DialogType, Dialog, Spinner, SpinnerSize, List, TextField } from '@fluentui/react';
 import Logo from './img/IOZ.png'
+import Connector from './SignalR/signalR-connection';
 
 interface IParticipant {
   id: string,
@@ -24,6 +25,9 @@ const scopes = ["user.read"];
 await msalInstance.initialize();
 
 function App() {
+  const { events, ShowResults, joinGroup, ShowVote } = Connector();
+
+
   const [msalToken, setMsalToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isDialogVisible, setIsDialogVisible] = useState<boolean>(false);
@@ -62,9 +66,9 @@ function App() {
       }
 
       const updatedVoting = await response.json();
-      localStorage.removeItem('ParticipantId');
-      setvotingFinished(true);
-      setVotingResult(updatedVoting.result)
+      ShowResults(updatedVoting.id, updatedVoting.result)
+
+
       console.log('Voting finished:', updatedVoting);
     } catch (error) {
       console.error("Error finishing voting:", error);
@@ -86,7 +90,9 @@ function App() {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      const updatedParticipant = await response.json();
+      const updatedParticipant: IParticipant = await response.json();
+      fetchParticipants(updatedParticipant.votingId)
+      ShowVote(updatedParticipant.votingId);
       console.log('Vote updated:', updatedParticipant);
 
     } catch (error) {
@@ -146,7 +152,6 @@ function App() {
 
       const data = await response.json();
       console.log('New voting created:', data);
-      toggleNewVotingDialog();
       window.location.href = `${window.location.origin}/${data.id}`;
 
     } catch (error) {
@@ -192,7 +197,7 @@ function App() {
         }
 
         const account = msalInstance.getActiveAccount();
-         setUserName(account?.name);
+        setUserName(account?.name);
         if (account && tokenResponse) {
           console.log("[AuthService] Got valid accountObj and tokenResponse");
           setMsalToken(tokenResponse.accessToken);
@@ -222,6 +227,27 @@ function App() {
     }
   };
 
+  //SignalR
+  useEffect(() => {
+    const handleFinishReceived = (result: number) => {
+      setVotingResult(result);
+      setvotingFinished(true);
+      localStorage.removeItem('ParticipantId');
+    };
+
+
+    events(handleFinishReceived);
+
+  }, [events]);
+
+  useEffect(() => {
+    const id = window.location.pathname.substring(1);
+    if (id) {
+      fetchParticipants(id);
+      joinGroup(id);
+    }
+  }, [joinGroup, participants]);
+
 
   useEffect(() => {
     const id = window.location.pathname.substring(1);
@@ -236,16 +262,15 @@ function App() {
 
   useEffect(() => {
     const id = window.location.pathname.substring(1);
-    if(id)
-    {
+    if (id) {
       if (localStorage.getItem('ParticipantId')) {
         setcurrentParticipantId(localStorage.getItem('ParticipantId'));
       }
-      else{
+      else {
         createNewParticipant(id);
       }
     }
-  },[userName])
+  }, [userName])
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -297,7 +322,7 @@ function App() {
       <Stack>
         <Stack horizontalAlign='end' className='Username'>
           <Text variant='large'>{userName}</Text>
-          </Stack>
+        </Stack>
         <Stack horizontal horizontalAlign="space-between" verticalAlign="center" className='Navigation'>
           <Stack horizontal verticalAlign="center">
             <img src={Logo} alt="Logo IOZ" style={{ width: '75px', marginRight: '10px' }} />
