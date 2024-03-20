@@ -27,11 +27,10 @@ await msalInstance.initialize();
 function App() {
   const { events, ShowResults, joinGroup, ShowVote } = Connector();
 
-
   const [msalToken, setMsalToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isDialogVisible, setIsDialogVisible] = useState<boolean>(false);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [votingDetails, setVotingDetails] = useState<undefined | any>(null);
   const [isDetailsDialogVisible, setIsDetailsDialogVisible] = useState<boolean>(false);
   const [isNewVotingDialogVisible, setIsNewVotingDialogVisible] = useState<boolean>(false);
@@ -42,7 +41,6 @@ function App() {
   const [participants, setParticipants] = useState<IParticipant[]>([]);
   const [currentVote, setCurrentVote] = useState<number | null>(null);
   const [currentParticipantId, setcurrentParticipantId] = useState<string | null>('');
-  const [votingFinished, setvotingFinished] = useState<boolean>(false);
   const [votingResult, setVotingResult] = useState<number>(-1);
 
   const finishVoting = async () => {
@@ -51,7 +49,6 @@ function App() {
     if (validVotes.length !== 0) {
       averageVote = validVotes.reduce((tot, vote) => tot + vote, 0) / validVotes.length;
     }
-
 
     try {
       const response = await fetch(`${process.env.REACT_APP_API_UPDATEVOTING}${votingId}${process.env.REACT_APP_API_UPDATEVOTINGCODE}`, {
@@ -72,13 +69,11 @@ function App() {
       const updatedVoting = await response.json();
       ShowResults(updatedVoting.id, updatedVoting.result)
 
-
       console.log('Voting finished:', updatedVoting);
     } catch (error) {
       console.error("Error finishing voting:", error);
     }
   };
-
 
   const updateVote = async (participantId: string | null, vote: number) => {
     try {
@@ -103,7 +98,6 @@ function App() {
       console.error("Error updating vote:", error);
     }
   };
-
 
   const createNewParticipant = async (votingId: string, name: string) => {
     const requestBody = {
@@ -135,7 +129,6 @@ function App() {
     }
   };
 
-
   const createNewVoting = async () => {
     const body = {
       title: newVotingTitle,
@@ -162,7 +155,6 @@ function App() {
       console.error("Error creating new voting:", error);
     }
   };
-
 
   const fetchVotingDetails = async (votingId: string) => {
     const response = await fetch(`${process.env.REACT_APP_API_GETVOTING}${votingId}${process.env.REACT_APP_API_GETVOTINGCODE}`);
@@ -191,10 +183,8 @@ function App() {
   };
 
   const handleLogin = async () => {
-
     if (!msalToken) {
       try {
-
         const tokenResponse = await msalInstance.handleRedirectPromise();
         if (tokenResponse) {
           msalInstance.setActiveAccount(tokenResponse.account);
@@ -202,10 +192,8 @@ function App() {
         } else {
           msalInstance.setActiveAccount(msalInstance.getAllAccounts()[0]);
         }
-
         const account = msalInstance.getActiveAccount();
-
-        if(account !== null){
+        if (account !== null) {
           setUserName(account.name ?? "");
         }
 
@@ -240,10 +228,9 @@ function App() {
 
   //SignalR
   useEffect(() => {
-    const handleFinishReceived = (result: number) => {
+    const handleFinishReceived = (result: number, votingId: string) => {
       setVotingResult(result);
-      setvotingFinished(true);
-      localStorage.removeItem('ParticipantId');
+      fetchParticipants(votingId);
     };
     const handleJoinGroupReceived = (votingId: string) => {
       fetchParticipants(votingId);
@@ -252,10 +239,7 @@ function App() {
       fetchParticipants(votingId);
     };
 
-
-
     events(handleFinishReceived, handleJoinGroupReceived, handleShowVoteReceived);
-
   }, [events]);
 
   useEffect(() => {
@@ -279,22 +263,21 @@ function App() {
     const id = window.location.pathname.substring(1);
     if (id) {
       setVotingId(id);
+      if (!localStorage.getItem("VotingId")) {
+        localStorage.setItem("VotingId", id);
+      }
+      else {
+        if (localStorage.getItem("VotingId") !== id) {
+          localStorage.clear();
+          localStorage.setItem("VotingId", id)
+        }
+      }
       setShowVoting(true);
     } else {
       setShowVoting(false);
       localStorage.clear();
     }
   }, []);
-
-  // useEffect(() => {
-  //   async function fetchCurrentParticipants() {
-  //     const id = window.location.pathname.substring(1);
-  //     if (id && currentParticipantId) {
-  //       await fetchParticipants(id);
-  //     }
-  //   }
-  //   fetchCurrentParticipants();   
-  // }, [currentParticipantId]);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -304,23 +287,23 @@ function App() {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
-        setHistory(data);
+        const sortedHistory: any[] = [...data].sort((a: any, b: any) => {
+          return Number(new Date(b.date)) - Number(new Date(a.date));
+        });
+
+        setHistory(sortedHistory);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching history:', error);
         setIsLoading(false);
       }
     };
-
     fetchHistory();
   }, []);
-
- 
 
   const toggleDialog = () => setIsDialogVisible(!isDialogVisible);
 
   const toggleNewVotingDialog = () => setIsNewVotingDialogVisible(!isNewVotingDialogVisible);
-
 
   const closeDetailsDialog = () => {
     setIsDetailsDialogVisible(false);
@@ -336,10 +319,11 @@ function App() {
     updateVote(currentParticipantId, vote);
   };
 
-
   return (
     isLoading || !msalToken ? (
-      <Spinner size={SpinnerSize.large} label="Loading..." ariaLive="assertive" labelPosition="right" />
+      <Stack className='spinner'>
+        <Spinner size={SpinnerSize.large} label="Loading..." ariaLive="assertive" labelPosition="right" />
+      </Stack>
     ) : (
       <Stack>
         <Stack horizontalAlign='end' className='Username'>
@@ -347,34 +331,32 @@ function App() {
         </Stack>
         <Stack horizontal horizontalAlign="space-between" verticalAlign="center" className='Navigation'>
           <Stack horizontal verticalAlign="center">
-            <img src={Logo} alt="Logo IOZ" style={{ width: '75px', marginRight: '10px' }} />
+            <img src={Logo} alt="Logo IOZ" className='logo' />
             <Text variant="xxLarge">Project Estimator</Text>
           </Stack>
           <Stack horizontal horizontalAlign="end">
             <Text variant='xLarge' onClick={toggleDialog}>History</Text>
+            {showVoting && (
+            <Text variant='xLarge' style={{ marginLeft: '20px' }} onClick={() => {
+              navigator.clipboard.writeText(window.location.href)
+            }}>Teilen</Text>
+            )}
           </Stack>
         </Stack>
 
-
         {!showVoting ? (
-          <Stack grow horizontalAlign="center" verticalAlign="center" styles={{ root: { height: '90vh' } }}>
-            <Stack horizontalAlign="center" verticalAlign="center">
-              <PrimaryButton text="Neue Schätzung" onClick={toggleNewVotingDialog} className='NewVoting' />
-            </Stack>
-          </Stack>
-        ) : votingFinished ? (
-          <Stack>
-            <Text variant="xLarge">Voting Ergebnis: {votingResult.toFixed(1)}</Text>
-            <Stack tokens={{ childrenGap: 10 }}>
-              <Text variant="large">Abstimmungsergebnisse:</Text>
-              {participants.map((participant) => (
-                <Text key={participant.id}>
-                  {participant.name}: {participant.vote !== -1 ? participant.vote : "Noch nicht abgestimmt"}
-                </Text>
+          <Stack horizontalAlign="center" className='OverviewContainer'>
+            <PrimaryButton text="Neue Schätzung" onClick={toggleNewVotingDialog} className='NewVoting' />
+            <Stack>
+              <Text variant='xxLarge' className='ActiveHistoryInfo'>Aktive Votings:</Text>
+              {history.filter(item => item.isActive).map((activeItem) => (
+                <Stack className='ActiveHistoryContainer' key={activeItem.id} horizontalAlign='center' onClick={() => window.location.href = `${window.location.origin}/${activeItem.id}`}>
+                  <Text className='ActiveHistoryTitle'>{activeItem.title}</Text>
+                </Stack>
               ))}
             </Stack>
           </Stack>
-        ) : (
+        ) :
           <Stack>
             <Stack tokens={{ childrenGap: 10 }}>
               <Stack horizontalAlign='center'>
@@ -389,9 +371,9 @@ function App() {
                     {participants.map((participant) => (
                       <Stack horizontalAlign='center' key={participant.id}>
                         <Text className='participantName' variant='xxLarge'>{participant.name}</Text>
-                        <Stack horizontalAlign='center' verticalAlign='center' className={`participantCard ${participant.vote !== -1 && participant.id !== currentParticipantId ? 'participantVoted' : ''} ${participant.id === currentParticipantId ? 'participantCurrent' : ''}`}>
+                        <Stack horizontalAlign='center' verticalAlign='center' className={`participantCard ${votingDetails !== null && votingDetails.isActive ? participant.vote !== -1 && participant.id !== currentParticipantId ? 'participantVoted' : '' : ''} ${participant.id === currentParticipantId ? 'participantCurrent' : ''}`}>
                           <Text className='participantVote'>
-                            {participant.id === currentParticipantId && participant.vote !== -1 ? ` ${participant.vote}` : ''}
+                            {votingDetails !== null && votingDetails.isActive ? participant.id === currentParticipantId && participant.vote !== -1 ? `${participant.vote}` : '' : participant.vote === -1 ? '?' : participant.vote}
                           </Text>
                         </Stack>
                       </Stack>
@@ -400,31 +382,62 @@ function App() {
                 </Stack>
               </Stack>
             </Stack>
-            {votingFinished ?
-
-              (<></>) : <></>}
-            <Stack horizontalAlign='center'>
-              <Stack className='buttonContainer' horizontalAlign='center'>
-                <Text variant="xxLarge" className='votingButtonInfo'>Wähle eine Karte</Text>
-                <Stack horizontal tokens={{ childrenGap: 10 }}>
-
-                  {[1, 2, 3, 5, 8, 13, 21, 34, 55].map((vote) => (
-                    <PrimaryButton
-                      key={vote}
-                      text={vote.toString()}
-                      onClick={() => handleVote(vote)}
-                      style={{ backgroundColor: currentVote === vote ? 'lightblue' : '' }}
-                      className='votingButton'
-                    />
-                  ))}
+            {votingDetails !== null && !votingDetails.isActive ?
+              (
+                <Stack horizontalAlign='center'>
+                  <Stack className='buttonContainer' horizontalAlign='center'>
+                    <Text variant="xxLarge" className='votingInfo'>Ergebnisse</Text>
+                    <Stack tokens={{ childrenGap: 10 }}>
+                      <Stack horizontal horizontalAlign='center' tokens={{ childrenGap: 20 }}>
+                        {
+                          Object.values(participants.reduce((acc, participant) => {
+                            const voteLabel = participant.vote !== -1 ? participant.vote.toString() : "?";
+                            if (!acc[voteLabel]) {
+                              acc[voteLabel] = { count: 1, vote: voteLabel };
+                            } else {
+                              acc[voteLabel].count++;
+                            }
+                            return acc;
+                          }, {} as Record<string, { count: number; vote: string }>))
+                            .map((item, index) => (
+                              <Stack horizontalAlign='center'>
+                                <Stack key={index} className='resultField' horizontalAlign='center' verticalAlign='center'>
+                                  {item.vote}
+                                </Stack>
+                                <Text className='resultVoteText'>
+                                  {item.count} {item.count === 1 ? "Vote" : "Votes"}
+                                </Text>
+                              </Stack>
+                            ))
+                        }
+                        <Stack horizontalAlign='center'>
+                          <Text className='resultText'>Ergebnis</Text>
+                          <Text className='resultTextNumber'>{votingResult.toFixed(1)}</Text>
+                        </Stack>
+                      </Stack>
+                    </Stack>
+                  </Stack>
                 </Stack>
-              </Stack>
-            </Stack>
-
+              ) : (
+                <Stack horizontalAlign='center'>
+                  <Stack className='buttonContainer' horizontalAlign='center'>
+                    <Text variant="xxLarge" className='votingInfo'>Wähle eine Karte</Text>
+                    <Stack horizontal tokens={{ childrenGap: 10 }}>
+                      {[1, 2, 3, 5, 8, 13, 21, 34, 55].map((vote) => (
+                        <PrimaryButton
+                          key={vote}
+                          text={vote.toString()}
+                          onClick={() => handleVote(vote)}
+                          style={{ backgroundColor: currentVote === vote ? 'lightblue' : '' }}
+                          className='votingButton'
+                        />
+                      ))}
+                    </Stack>
+                  </Stack>
+                </Stack>
+              )}
           </Stack>
-        )}
-
-
+        }
         <Dialog
           hidden={!isDialogVisible}
           onDismiss={toggleDialog}
@@ -446,7 +459,7 @@ function App() {
               item ? (
                 <div className='VotingBox' key={item.id}>
                   <Text className='HistoryTitle'>{item.title}</Text>
-                  <Text className='HistoryResult'>Ergebnis: {item.result}</Text>
+                  <Text className='HistoryResult'>Ergebnis: {item.result.toFixed(1)}</Text>
                   <PrimaryButton text="Details" onClick={() => fetchVotingDetails(item.id)} />
                 </div>
               ) : (
@@ -458,7 +471,6 @@ function App() {
             <PrimaryButton onClick={toggleDialog} text="Close" />
           </DialogFooter>
         </Dialog>
-
         <Dialog
           hidden={!isDetailsDialogVisible}
           onDismiss={closeDetailsDialog}
@@ -483,15 +495,13 @@ function App() {
           <Stack tokens={{ childrenGap: 20 }}>
             <Stack horizontalAlign="center" tokens={{ childrenGap: 20 }}>
               <Text variant="xLarge">Ergebnis</Text>
-              <Text variant="superLarge" className='DetailResult'>{votingDetails?.result}</Text>
+              <Text variant="superLarge" className='DetailResult'>{votingDetails?.result.toFixed(1)}</Text>
             </Stack>
-
             <Stack horizontal tokens={{ childrenGap: 50 }} horizontalAlign="start">
               <Stack className='DetailsCreation'>
                 <Text variant="medium">Erstellt von {votingDetails?.creator}</Text>
                 <Text variant="medium">Erstellt am {votingDetails?.date}</Text>
               </Stack>
-
               <Stack className='DetailsParticipants'>
                 <Text variant="medium">Teilnehmer</Text>
                 {votingDetails?.participants.map((participant: IParticipant) => (
@@ -505,14 +515,13 @@ function App() {
                       <Text variant="medium">{participant.name}</Text>
                     </Stack>
                     <Stack horizontalAlign='end' className='DetailParticipantVote'>
-                      <Text variant="medium">Schätzung: {participant.vote}</Text>
+                      <Text variant="medium">Schätzung: {participant.vote === -1 ? '?' : participant.vote}</Text>
                     </Stack>
                   </Stack>
                 ))}
               </Stack>
             </Stack>
           </Stack>
-
           <DialogFooter>
             <PrimaryButton onClick={closeDetailsDialog} text="Close" />
           </DialogFooter>
@@ -532,7 +541,6 @@ function App() {
               }
             }
           }}
-
           modalProps={{
             isBlocking: false,
           }}
@@ -546,7 +554,5 @@ function App() {
       </Stack>
     )
   );
-
 }
-
 export default App;

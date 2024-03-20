@@ -8,12 +8,15 @@
 }
 .NewVoting{
   padding: 30px;
+  margin: 10px;
+  margin-bottom: 40px;
   font-size: large;
+  border-radius: 10px;
 }
 .VotingBox
 {
   padding: 20px;
-  margin: 10px 0;
+  margin: 10px;
   box-Shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   border-Radius: 10px;
   background-Color: white;
@@ -34,6 +37,27 @@
 .HistoryResult{
   font-Size: 16px;
   width: 33%;
+}
+.ActiveHistoryContainer{
+  padding: 20px;
+  margin: 10px;
+  box-Shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-Radius: 10px;
+  min-width: 350px;
+  cursor: pointer;
+}
+.ActiveHistoryTitle{
+  font-Size: 18px;
+  font-Weight: bold;
+  width: 90%;
+}
+.ActiveHistoryInfo{
+  padding-left: 20px;
+  padding-bottom: 20px;
+  padding-top: 5px;
+}
+.OverviewContainer{
+  margin: 50px;
 }
 .DetailResult{
   margin-bottom: 30px;
@@ -134,7 +158,37 @@
   font-size: 50px;
   margin-bottom: 20px;
 }
-.votingButtonInfo{
+.votingInfo{
   padding: 20px;
+  padding-bottom: 30px;
 }
-
+.resultField{
+  min-width: 150px;
+  min-height: 150px;
+  border-radius: 10px;
+  font-size: 50px;
+  margin-bottom: 5px;
+  border: 1px solid gray;
+}
+.resultText{
+  font-size: 40px;
+  padding-left: 50px;
+}
+.resultVoteText{
+  font-size: 25px;
+}
+.resultTextNumber{
+  font-size: 50px;
+  padding-left: 50px;
+  padding-top: 5px;
+}
+.spinner{
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+}
+.logo{
+  width: 75px;
+  margin-right: 10px;
+}

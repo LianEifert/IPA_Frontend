@@ -14,7 +14,7 @@ const URL: any = settings.URL;
 
 class Connector {
     private connection: signalR.HubConnection;
-    public events: (ShowResults: (result: number) => void, UserJoined: (votingId: string) => void, NewVote: (votingId: string) => void) => void;
+    public events: (ShowResults: (result: number, votingId: string) => void, UserJoined: (votingId: string) => void, NewVote: (votingId: string) => void) => void;
     static instance: Connector;
     constructor() {
         this.connection = new signalR.HubConnectionBuilder()
@@ -23,8 +23,8 @@ class Connector {
             .build();
         this.start()
         this.events = (onVotingFinished, onUserJoined, onNewVote) => {
-            this.connection.on("VotingFinished", (result: number) => {
-                onVotingFinished(result);
+            this.connection.on("VotingFinished", (result: number, votingId: string) => {
+                onVotingFinished(result, votingId);
             });
             this.connection.on("UserJoined", (votingId: string) => {
                 onUserJoined(votingId);
