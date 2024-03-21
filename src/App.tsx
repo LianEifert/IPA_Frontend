@@ -319,6 +319,10 @@ function App() {
     updateVote(currentParticipantId, vote);
   };
 
+  const navigateHome = () => {
+    window.location.href = window.location.origin;
+  }
+
   return (
     isLoading || !msalToken ? (
       <Stack className='spinner'>
@@ -330,16 +334,16 @@ function App() {
           <Text variant='large'>{userName}</Text>
         </Stack>
         <Stack horizontal horizontalAlign="space-between" verticalAlign="center" className='Navigation'>
-          <Stack horizontal verticalAlign="center">
+          <Stack horizontal verticalAlign="center" onClick={() => { navigateHome() }}>
             <img src={Logo} alt="Logo IOZ" className='logo' />
-            <Text variant="xxLarge">Project Estimator</Text>
+            <Text variant="xxLarge" >Project Estimator</Text>
           </Stack>
           <Stack horizontal horizontalAlign="end">
             <Text variant='xLarge' onClick={toggleDialog}>History</Text>
             {showVoting && (
-            <Text variant='xLarge' style={{ marginLeft: '20px' }} onClick={() => {
-              navigator.clipboard.writeText(window.location.href)
-            }}>Teilen</Text>
+              <Text variant='xLarge' style={{ marginLeft: '20px' }} onClick={() => {
+                navigator.clipboard.writeText(window.location.href)
+              }}>Teilen</Text>
             )}
           </Stack>
         </Stack>
