@@ -367,7 +367,7 @@ function App() {
               </Stack>
               <Stack horizontalAlign='center'>
                 <Stack className='participantContainer'>
-                  <Stack className="participantGrid">
+                  <Stack className="participantGrid" wrap horizontal>
                     {participants.map((participant) => (
                       <Stack horizontalAlign='center' key={participant.id}>
                         <Text className='participantName' variant='xxLarge'>{participant.name}</Text>
@@ -388,7 +388,7 @@ function App() {
                   <Stack className='buttonContainer' horizontalAlign='center'>
                     <Text variant="xxLarge" className='votingInfo'>Ergebnisse</Text>
                     <Stack tokens={{ childrenGap: 10 }}>
-                      <Stack horizontal horizontalAlign='center' tokens={{ childrenGap: 20 }}>
+                      <Stack horizontal horizontalAlign='center' wrap tokens={{ childrenGap: 20 }}>
                         {
                           Object.values(participants.reduce((acc, participant) => {
                             const voteLabel = participant.vote !== -1 ? participant.vote.toString() : "?";
@@ -422,7 +422,7 @@ function App() {
                 <Stack horizontalAlign='center'>
                   <Stack className='buttonContainer' horizontalAlign='center'>
                     <Text variant="xxLarge" className='votingInfo'>Wähle eine Karte</Text>
-                    <Stack horizontal tokens={{ childrenGap: 10 }}>
+                    <Stack horizontal wrap tokens={{ childrenGap: 10 }} >
                       {[1, 2, 3, 5, 8, 13, 21, 34, 55].map((vote) => (
                         <PrimaryButton
                           key={vote}

@@ -94,8 +94,6 @@
 }
 
 .participantGrid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
   padding: 10px;
 }
@@ -103,10 +101,10 @@
 .participantCard {
   border: 1px solid black;
   padding: 10px;
-  margin-bottom: 20px;
   min-width: 250px;
   min-height: 300px;
   border-radius: 10px;
+  margin: 31px;
 }
 
 .participantVoted {
@@ -126,7 +124,7 @@
 .participantContainer{
   border: 1px solid gray;
   border-radius: 50px;
-  width: 75%;
+  width: 65%;
   padding: 20px;
   margin: 20px;
 }
@@ -141,15 +139,15 @@
   min-height: 60px;
   font-size: 30px;
   border-radius: 10px;
+  min-width: 200px
 }
-
 
 .buttonContainer{
   border: 1px solid gray;
   padding: 10px;
   margin-bottom: 20px;
   border-radius: 50px;
-  width: 75%;
+  width: 65%;
 }
 .votingButton{
   min-width: 150px;
@@ -191,4 +189,8 @@
 .logo{
   width: 75px;
   margin-right: 10px;
+}
+.wrap{
+  display: flex;
+  flex-wrap: wrap;
 }
