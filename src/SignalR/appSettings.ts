@@ -5,5 +5,4 @@ const appSettings = () => {
     };
     return app_settings_vals;
 };
-
 export default appSettings;

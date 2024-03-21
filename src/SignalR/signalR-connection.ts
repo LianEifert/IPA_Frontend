@@ -1,15 +1,6 @@
 import * as signalR from "@microsoft/signalr";
 import appSettings from './appSettings';
-
-interface IParticipant {
-    id: string,
-    name: string,
-    vote: number,
-    votingId: string
-}
-
 const settings = appSettings();
-
 const URL: any = settings.URL;
 
 class Connector {
