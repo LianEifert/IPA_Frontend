@@ -336,12 +336,12 @@ function App() {
         <Stack horizontal horizontalAlign="space-between" verticalAlign="center" className='Navigation'>
           <Stack horizontal verticalAlign="center" onClick={() => { navigateHome() }}>
             <img src={Logo} alt="Logo IOZ" className='logo' />
-            <Text variant="xxLarge" >Project Estimator</Text>
+            <Text variant="xxLarge" className='navigationTextLink'>Project Estimator</Text>
           </Stack>
           <Stack horizontal horizontalAlign="end">
-            <Text variant='xLarge' onClick={toggleDialog}>History</Text>
+            <Text variant='xLarge' onClick={toggleDialog} className='navigationTextLink'>History</Text>
             {showVoting && (
-              <Text variant='xLarge' style={{ marginLeft: '20px' }} onClick={() => {
+              <Text variant='xLarge' className='navigationTextLink' style={{ marginLeft: '20px' }} onClick={() => {
                 navigator.clipboard.writeText(window.location.href)
               }}>Teilen</Text>
             )}
